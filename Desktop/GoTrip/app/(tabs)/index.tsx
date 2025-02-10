@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { View, Text, Button, ActivityIndicator, StyleSheet } from 'react-native';
+import { useState, useEffect,  } from 'react';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, SafeAreaView } from 'react-native';
 import * as Location from 'expo-location';
 
 export default function HomeScreen() {
@@ -99,31 +99,33 @@ export default function HomeScreen() {
     }
   }, [weather]);
 
+  useEffect(() => {
+    getUserLocation()
+  }, [])
+
+  const renderItem = ({item}) =>(
+    <View> 
+        <Text  style = {styles.fetchedPlaces} >{item.name}</Text>
+        <Text> {item.vicinity}</Text>
+    </View>
+  )
+
   return (
-    <View style={{ padding: 20 }}>
-      <Button title="Get Location & Weather" onPress={getUserLocation} />
+    <SafeAreaView style={styles.mainDiv}>
   
       {loading && <ActivityIndicator size="large" color="blue" />}
       
       {error && <Text style={{ color: 'red' }}>{error}</Text>}
   
-      {location && (
-        <Text>Latitude: {location.latitude}, Longitude: {location.longitude}</Text>
-      )}
-  
-      {weather && <Text>Weather: {weather}</Text>}
-  
-      <Text>Recommended Place Type: {weatherToPlaceType[weather] || weatherToPlaceType.Default}</Text>
-  
-      <Text>Nearby Places:</Text>
-      {fetchedPlaces.length > 0 ? (
-        fetchedPlaces.map((place, index) => (
-          <Text key={index}>@ {place.name}</Text>
-        ))
-      ) : (
-        <Text>No places found</Text>
-      )}
-    </View>
+      <Text style = {styles.title}>Enjoy your day in: {weatherToPlaceType[weather] || weatherToPlaceType.Default}</Text>
+
+      <FlatList
+        style={{width:"100%"}}
+        data={fetchedPlaces}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </SafeAreaView>
   );
   
 }
@@ -131,6 +133,23 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainDiv: {
     flex: 1,
-    flexDirection: 'column',
+    margin: 20,
+    justifyContent: 'center',
   },
+
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    textAlign:'left',
+    margin: 16
+  },
+
+  fetchedPlaces: {
+    backgroundColor: 'gray',
+    borderRadius: 5,
+    height: 70,
+    padding: 16,
+    fontSize: 18,
+    margin: 16
+  }
 });
