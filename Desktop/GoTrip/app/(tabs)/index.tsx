@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, SafeAreaView, Image } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, SafeAreaView, Image, Pressable } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
+import RecommendedPlacesList from './recommendedPlacesList';
 
-export default function HomeScreen() {
+export default function RecommendationScreen() {
   const [location, setLocation] = useState(null);
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -69,7 +70,7 @@ export default function HomeScreen() {
   };
 
   const getPlacesByWeatherType = async (lat, lon, weatherType) => {
-    const radius = 40000;
+    const radius = 4000;
     const placeType = weatherToPlaceType[weatherType] || weatherToPlaceType.Default;
     
     const PLACES_URL = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&keyword=${placeType}&key=${PLACES_API_KEY}`;
@@ -173,38 +174,13 @@ export default function HomeScreen() {
     getUserLocation();
   }, []);
 
-  const renderItem = ({item}) => (
-    <View style={styles.fetchedPlaces}> 
-    {item.photo? (
-      <Image
-      style={styles.image}
-      source={{uri: item.photo }}/>
-    ): (<Text>No image found</Text>
-    )}
-     
-      <View style={styles.fetchedPlacesSubDiv}>
-        <Text style={styles.spotName}>{item.name}</Text>
-        <Text>{item.vicinity}</Text>
-        <Text>{item.distance} away</Text>
-        <Text>{item.duration} away</Text>
-      </View>
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.mainDiv}>
       {loading && <ActivityIndicator size="large" color="blue" />}
       {error && <Text style={{color: 'red'}}>{error}</Text>}
-
       <Text style={styles.title}>Perfect Hangouts For {weather} Weather</Text>
-
-      <FlatList
-        style={{width:"100%"}}
-        // data={fetchedPlaces.slice(0, 10)}
-        data={fetchedPlaces}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
-      />
+      <RecommendedPlacesList places={fetchedPlaces} onPress={{}} />
     </SafeAreaView>
   );
 }
