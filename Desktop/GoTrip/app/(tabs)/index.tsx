@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, SafeAreaView, Image, Pressable } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
-import RecommendedPlacesList from './recommendedPlacesList';
+import RecommendedPlacesList from '../recommendedPlacesList';
 
 export default function RecommendationScreen() {
   const [location, setLocation] = useState(null);
