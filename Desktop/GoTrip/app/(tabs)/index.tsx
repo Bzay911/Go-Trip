@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, SafeAreaView, Image, Pressable } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
-import RecommendedPlacesList from '../recommendedPlacesList';
+import { useRouter } from 'expo-router';
+
+
 
 export default function RecommendationScreen() {
   const [location, setLocation] = useState(null);
@@ -73,11 +75,11 @@ export default function RecommendationScreen() {
     const radius = 4000;
     const placeType = weatherToPlaceType[weatherType] || weatherToPlaceType.Default;
     
-    const PLACES_URL = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&keyword=${placeType}&key=${PLACES_API_KEY}`;
+    // const PLACES_URL = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&keyword=${placeType}&key=${PLACES_API_KEY}`;
 
     // Test url for places
     
-    // const PLACES_URL = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.9163,151.2412&radius=15000&keyword=beach&key=AIzaSyDOkh_o7VNClpnHjKb0aMR0tpGQZjZ9hLE`;
+    const PLACES_URL = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.9163,151.2412&radius=15000&keyword=beach&key=AIzaSyDOkh_o7VNClpnHjKb0aMR0tpGQZjZ9hLE`;
 
     try {
       const response = await fetch(PLACES_URL);
@@ -158,6 +160,8 @@ export default function RecommendationScreen() {
     }
   };
 
+  
+
   useEffect(() => {
     if (location) {
       fetchWeather(location.latitude, location.longitude);
@@ -180,10 +184,48 @@ export default function RecommendationScreen() {
       {loading && <ActivityIndicator size="large" color="blue" />}
       {error && <Text style={{color: 'red'}}>{error}</Text>}
       <Text style={styles.title}>Perfect Hangouts For {weather} Weather</Text>
-      <RecommendedPlacesList places={fetchedPlaces} onPress={{}} />
+      <RecommendedPlacesList places={fetchedPlaces} location = {location}/>
     </SafeAreaView>
   );
 }
+
+export function RecommendedPlacesList({ places, location }) {
+  const router = useRouter();
+
+  const renderItem = ({ item }) => (
+      <Pressable onPress={() => router.push({
+          pathname: `/placeDetailsScreen`, 
+          params: {
+              item: JSON.stringify(item),
+              location: location ? JSON.stringify(location) : null,
+              
+          }})}>
+          <View style={styles.fetchedPlaces}> 
+              {item.photo ? (
+                  <Image style={styles.image} source={{ uri: item.photo }} />
+              ) : (
+                  <Text>No image found</Text>
+              )}
+              <View style={styles.fetchedPlacesSubDiv}>
+                  <Text style={styles.spotName}>{item.name}</Text>
+                  <Text>{item.vicinity}</Text>
+                  <Text>{item.distance}</Text>
+                  <Text>{item.duration} away</Text>
+              </View>
+          </View>
+      </Pressable>
+  );
+
+  return (
+      <FlatList
+          style={{ width: "100%" }}
+          data={places}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => index.toString()}
+      />
+  );
+}
+
 
 const styles = StyleSheet.create({
   mainDiv: {
@@ -195,8 +237,36 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     textAlign:'left',
-    margin: 16
-  },
+    margin: 16},
+  // },
+  // fetchedPlaces: {
+  //   backgroundColor: '#D9D9D9',
+  //   borderRadius: 10,
+  //   height: 140,
+  //   padding: 16,
+  //   margin: 16,
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  // },
+  // fetchedPlacesSubDiv: {
+  //   flex: 1,
+  //   marginLeft: 8,
+  //   alignItems: 'flex-start',
+  //   gap: 3,
+  //   justifyContent: 'center'
+  
+  // },
+  // spotName: {
+  //   fontWeight: 'bold',
+  //   textTransform: 'capitalize',
+  //   fontSize: 16
+  // },
+  // image: {
+  //   height: 90,
+  //   width: 80,
+  //   marginRight: 8,
+  //   borderRadius: 7
+  // },
   fetchedPlaces: {
     backgroundColor: '#D9D9D9',
     borderRadius: 10,
@@ -205,24 +275,23 @@ const styles = StyleSheet.create({
     margin: 16,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  fetchedPlacesSubDiv: {
+},
+fetchedPlacesSubDiv: {
     flex: 1,
     marginLeft: 8,
     alignItems: 'flex-start',
-    gap: 3,
-    justifyContent: 'center'
-  
-  },
-  spotName: {
+    justifyContent: 'center',
+},
+spotName: {
     fontWeight: 'bold',
     textTransform: 'capitalize',
-    fontSize: 16
-  },
-  image: {
+    fontSize: 16,
+    marginBottom: 4, 
+},
+image: {
     height: 90,
     width: 80,
     marginRight: 8,
-    borderRadius: 7
-  }
+    borderRadius: 7,
+},
 });
