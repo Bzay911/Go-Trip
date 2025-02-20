@@ -6,6 +6,7 @@ import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } fro
 import { useRouter } from 'expo-router';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import React from 'react';
+import { Entypo, FontAwesome, FontAwesome5, Ionicons } from '@expo/vector-icons';
 
 export default function Signup() {
     const auth = useContext(AuthContext);
@@ -68,7 +69,7 @@ export default function Signup() {
 
                 <View style={styles.inputContainer}>
                     <View style={styles.inputWrapper}>
-                        <Text style={styles.inputIcon}>👤</Text> {/* Replaced person-outline with a user emoji */}
+                    <FontAwesome name="user" size={20} color="#A0A3A8" />
                         <TextInput
                             style={styles.input}
                             placeholder="Name"
@@ -79,7 +80,7 @@ export default function Signup() {
                     </View>
 
                     <View style={styles.inputWrapper}>
-                        <Text style={styles.inputIcon}>📧</Text> {/* Replaced mail-outline with an email emoji */}
+                        <Entypo name="mail" size={20} color="#A0A3A8" />
                         <TextInput
                             style={styles.input}
                             placeholder="Email"
@@ -92,7 +93,7 @@ export default function Signup() {
                     </View>
 
                     <View style={styles.inputWrapper}>
-                        <Text style={styles.inputIcon}>🔒</Text> {/* Replaced lock-closed-outline with a lock emoji */}
+                        <FontAwesome name="lock" size={20} color="#A0A3A8" />
                         <TextInput
                             style={styles.input}
                             placeholder="Password"
@@ -104,7 +105,7 @@ export default function Signup() {
                     </View>
 
                     <View style={styles.inputWrapper}>
-                        <Text style={styles.inputIcon}>🔒</Text> {/* Replaced lock-closed-outline with a lock emoji */}
+                        <FontAwesome name="lock" size={20} color="#A0A3A8" />
                         <TextInput
                             style={styles.input}
                             placeholder="Confirm Password"
@@ -127,7 +128,7 @@ export default function Signup() {
                 </View>
 
                 <TouchableOpacity style={styles.googleButton}>
-                    <Text style={styles.inputIcon}>🌐</Text> {/* Replaced logo-google with a globe emoji */}
+                    <FontAwesome name="google" size={20} color="white" />
                     <Text style={styles.googleButtonText}>Google</Text>
                 </TouchableOpacity>
 
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     inputIcon: {
-        marginRight: 10,
+        marginRight: 20,
         color: '#A0A3A8',
         fontSize: 20,
     },
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 20,
+        marginBottom: 40,
     },
     googleButtonText: {
         color: 'white',

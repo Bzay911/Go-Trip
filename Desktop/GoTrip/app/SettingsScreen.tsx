@@ -6,6 +6,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
+import { AntDesign, Entypo, Ionicons } from '@expo/vector-icons';
 
 // Firebase instances
 const auth = getAuth();
@@ -73,6 +74,8 @@ const SettingsScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  
 
   // Function to pick an image from the gallery
   const navigateToEdit = async () => {
@@ -176,8 +179,8 @@ const SettingsScreen: React.FC = () => {
     );
   };
 
-  const toggleDarkMode = () => {
-    setIsDarkMode((prevMode) => !prevMode);
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
   };
 
   const navigateToEditProfile = () => {
@@ -226,10 +229,10 @@ const SettingsScreen: React.FC = () => {
           {profileImageUrl ? (
             <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
           ) : (
-            <Text style={styles.profileIcon}>👤</Text>
+            <Ionicons name="person-circle-outline" size={100} color="#A0A3A8" />
           )}
           <View style={styles.editIconContainer}>
-            <Text style={styles.editIcon}>✏️</Text>
+          <Entypo name="edit" size={24} color="black" />
           </View>
         </TouchableOpacity>
         <View style={styles.profileInfo}>
@@ -240,6 +243,13 @@ const SettingsScreen: React.FC = () => {
             {userEmail}
           </Text>
         </View>
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeButton}>
+          <Ionicons
+            name={isDarkMode ? 'moon' : 'sunny'}
+            size={30}
+            color={isDarkMode ? '#fff' : '#000'}
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -320,9 +330,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 5,
     right: 5,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#C5C3C2',
     borderRadius: 10,
     padding: 5,
+    opacity:50,
   },
   editIcon: {
     fontSize: 10,
@@ -376,6 +387,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  themeButton: {
+    padding: 10,
   },
 });
 

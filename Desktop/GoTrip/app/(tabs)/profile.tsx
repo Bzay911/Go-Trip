@@ -8,6 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 // Initialize Firebase
 import { firebaseConfig } from '@/config/Config'; 
 import { initializeApp } from 'firebase/app';
+import { Ionicons } from '@expo/vector-icons';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -43,10 +44,10 @@ const ProfileScreen: React.FC = () => {
   const [favouritePosts, setFavouritePosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'posts' | 'favourites'>('posts'); // Track active tab for posts or favourites
-  const [isModalVisible, setIsModalVisible] = useState(false); // For modal visibility
-  const [selectedImage, setSelectedImage] = useState<string | null>(null); // Track the selected image or icon for full-screen view
-  const [isIconSelected, setIsIconSelected] = useState(false); // Track if an icon was clicked
+  const [activeTab, setActiveTab] = useState<'posts' | 'favourites'>('posts'); 
+  const [isModalVisible, setIsModalVisible] = useState(false); 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null); 
+  const [isIconSelected, setIsIconSelected] = useState(false); 
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -62,7 +63,7 @@ const ProfileScreen: React.FC = () => {
           const userDocSnap = await getDoc(userDocRef);
 
           if (userDocSnap.exists()) {
-            const userData = userDocSnap.data() as UserData; // Explicitly cast to UserData
+            const userData = userDocSnap.data() as UserData; 
             setUserName(userData?.name || user.displayName || 'User');
             setUserEmail(userData?.email || user.email || '');
             setProfileImageUrl(userData?.profileImageUrl || null);
@@ -114,7 +115,7 @@ const ProfileScreen: React.FC = () => {
   const handleImagePress = (imageUrl: string | null, isIcon: boolean) => {
     if (isIcon) {
       setIsIconSelected(true);
-      setSelectedImage(null); // Don't need to pass image, since it's just an icon
+      setSelectedImage(null); 
     } else {
       setIsIconSelected(false);
       setSelectedImage(imageUrl);
@@ -160,7 +161,7 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={() => handleImagePress(null, true)}>
-              <Text style={styles.defaultIcon}>👤</Text> {/* Display default icon if no image */}
+              <Ionicons name="person-circle-outline" size={100} color="#A0A3A8" />
             </TouchableOpacity>
           )}
         </View>
@@ -169,7 +170,7 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.userEmail}>{userEmail}</Text>
         </View>
         <TouchableOpacity onPress={navigateToSettings} style={styles.settingsButton}>
-          <Text style={styles.settingsIcon}>☰</Text> {/* Settings icon */}
+          <Ionicons name="menu" size={24} color="black" />
         </TouchableOpacity>
       </View>
 
@@ -207,7 +208,7 @@ const ProfileScreen: React.FC = () => {
         <Pressable style={styles.modalBackground} onPress={closeModal}>
           <View style={styles.modalContent}>
             {isIconSelected ? (
-              <Text style={styles.iconInModal}>👤</Text> // Display icon in the modal if selected
+              <Ionicons name="person-circle-outline" size={100} color="#A0A3A8" />
             ) : (
               <Image source={{ uri: selectedImage || '' }} style={styles.fullScreenImage} />
             )}

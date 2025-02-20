@@ -4,7 +4,7 @@ import { AuthContext } from '@/context/AuthContext';
 import { signInWithEmailAndPassword } from '@firebase/auth';
 import { useContext, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
+import { Entypo, FontAwesome } from '@expo/vector-icons';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import React from 'react';
 
@@ -59,7 +59,7 @@ export default function Login() {
                 {/* Input Fields */}
                 <View style={styles.inputContainer}>
                     <View style={styles.inputWrapper}>
-                        <Text style={styles.inputIcon}>📧</Text>
+                        <Entypo name="mail" size={20} color="#A0A3A8" />
                         <TextInput
                             style={styles.input}
                             placeholder="Email"
@@ -72,7 +72,7 @@ export default function Login() {
                     </View>
 
                     <View style={styles.inputWrapper}>
-                         <Text style={styles.inputIcon}>🔒</Text>
+                        <FontAwesome name="lock" size={20} color="#A0A3A8" />
                         <TextInput
                             style={styles.input}
                             placeholder="Password"

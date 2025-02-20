@@ -105,6 +105,7 @@ const EditProfileScreen: React.FC = () => {
       <Text style={styles.header}>Edit Profile</Text>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
+      
 
       <TextInput
         style={styles.input}
