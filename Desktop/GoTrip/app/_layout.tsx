@@ -5,7 +5,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/useColorScheme';
 import PlacesProvider from './placesContext';
 
@@ -36,11 +35,9 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
+        {/* <Stack.Screen name="rcommendationScreen" /> */}
         <Stack.Screen name="placeDetailsScreen"
         options={{
-          // headerBackTitle: "",
-          // headerTitle: "",
-          // headerBackButtonDisplayMode: "minimal",
           headerShown: false
         }} />
       </Stack>
