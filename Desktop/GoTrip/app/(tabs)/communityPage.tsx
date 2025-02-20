@@ -8,6 +8,7 @@ import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import PlaceSearchBar from "@/components/PlaceSearchBar"
 import { collection, onSnapshot, query, QuerySnapshot } from "firebase/firestore"
+import { PostInterface } from "@/types/PostInterface"
 
 export default function communityPage() {
     const db = useContext(DBContext);
@@ -15,7 +16,9 @@ export default function communityPage() {
     const insets = useSafeAreaInsets()
 
     const [loaded, setLoaded] = useState(false);
-    const [data, setData] = useState([]);
+    const [data, setData] = useState<PostInterface[]>([]);
+    const [selectedChip, setSelectedChip] = useState<string | null>(null);
+    const [filteredData, setFilteredData] = useState<PostInterface[]>([]);
 
     useEffect(() => {
         if (loaded == false) {
@@ -38,6 +41,21 @@ export default function communityPage() {
         })
     }
 
+    useEffect(() => {
+        if (selectedChip) {
+            const filtered = data.filter((post) => 
+                post.category.toLowerCase() === selectedChip.toLowerCase()
+              );
+            setFilteredData(filtered);
+        } else {
+            setFilteredData(data);
+        }
+    }, [selectedChip, data]);
+    
+    const handleChipPress = (label: string) => {
+        setSelectedChip(selectedChip === label ? null : label);
+    };
+
     const handleNavigate = () => {
         // Navigates to the "another-screen" route (file name without extension)
         try {
@@ -51,7 +69,7 @@ export default function communityPage() {
         const postData = {
             postId: props.id,
             username: "Steves John",
-            images: [props.image],
+            images: props.image,
             likes: props.numberOfLikes,
             comments: "5.3k",
             hashtags: ["nature", "sunset", "photography", "wollhara"],
@@ -69,7 +87,7 @@ export default function communityPage() {
             <ListItem
                 id={item.id}
                 image={item.imageURL}
-                numberOfLikes ={item.numberOfLikes}
+                numberOfLikes={item.numberOfLikes}
                 createdAt={item.createdAt}
             />
         );
@@ -97,13 +115,14 @@ export default function communityPage() {
                             <SearchChip
                                 key={chip}
                                 label={chip}
-                                isSelected={false}
+                                isSelected={selectedChip === chip}
+                                onPress={ () => handleChipPress(chip) }
                             />
                         ))}
                     </ScrollView>
 
                     <FlatList
-                        data={data}
+                        data={selectedChip ? filteredData : data}
                         renderItem={renderItem}
                         keyExtractor={(item: any) => item.id}
                         ItemSeparatorComponent={Separator}

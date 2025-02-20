@@ -1,6 +1,6 @@
 
 import { useContext, useState } from "react"
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Pressable, Alert, Image } from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Pressable, Alert, Image, ActivityIndicator } from "react-native"
 import * as ImagePicker from "expo-image-picker";
 import { Image as ImageIcon } from "lucide-react-native"
 import SearchChip from "@/components/SearchChip"
@@ -13,6 +13,7 @@ import { ref, uploadBytes, getDownloadURL } from "@firebase/storage"
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { AuthContext } from "@/Contexts/AuthContext";
 import { DBContext } from "@/Contexts/dbContext";
+import ImageCarousel from "@/components/imageCarousel";
 
 const categories = ["Lookout", "Sunrise", "Sunset", "Park"]
 
@@ -20,10 +21,10 @@ export default function uploadScreen() {
 
   const [downloadURL, setDownloadURL] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [selectedImage, setImageSelected] = useState("");
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>()
   const [description, setDescription] = useState("")
-  const [images, setImages] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
   // Get a reference to Firebase Storage
   const storage = useContext(FsContext);
@@ -33,15 +34,33 @@ export default function uploadScreen() {
 
   const handleAddPost = async () => {
 
-    let imageUrl = "";
-    if (selectedImage) {
-      // Await the upload so that imageUrl is available
-      imageUrl = await uploadImageToStorage(selectedImage);
+    if (!selectedImages.length) {
+      alert("Please select at least one image.");
+      return;
     }
 
+     // Check if description is empty (using trim() to avoid spaces)
+  if (!description.trim()) {
+    alert("Please enter a description for your post.");
+    return;
+  }
+
+  // Check if a category has been selected
+  if (!selectedCategory || selectedCategory.trim() === "") {
+    alert("Please choose a category.");
+    return;
+  }
+
+  setIsUploading(true)
+    // Upload each image and get its download URL
+    const imageUrls = await Promise.all(
+      selectedImages.map(async (image) => await uploadImageToStorage(image))
+    );
+
     const Post = {
+      userName: "Steve John",
       description: description,
-      imageURL: imageUrl,  //TODO: Make it array later
+      imageURL: imageUrls,  //TODO: Make it array later
       category: selectedCategory,
       email: "john@mail.com",
       numberOfLikes: 0,
@@ -50,11 +69,17 @@ export default function uploadScreen() {
     };
 
     try {
-      const path = `posts`;
+      const path = "posts";
       const docRef = await addDoc(collection(db, path), Post);
+      setSelectedImages([]);
+      setDescription("");
+      setSelectedCategory("");
+      setDownloadURL("");
       alert("Post uploaded successfully !!!.");
     } catch (e: any) {
       alert(`Error adding documennt: ${e.errorMessage}`);
+    }finally {
+      setIsUploading(false);
     }
   }
 
@@ -69,7 +94,7 @@ export default function uploadScreen() {
     if (!result.canceled) {
       //  save image
       setModalIsOpen(false);
-      setImageSelected(result.assets[0].uri);
+      setSelectedImages((prevImages) => [...prevImages, ...result.assets.map(asset => asset.uri)]);
     } else {
       alert("you did not select any image.");
     }
@@ -80,13 +105,14 @@ export default function uploadScreen() {
   const pickGallerymageAsync = async () => {
     console.log("i am here");
     let result = await ImagePicker.launchImageLibraryAsync({
-      cameraType: ImagePicker.CameraType.front,
+      allowsMultipleSelection: true,
       aspect: [1, 1],
       quality: 1,
     });
     if (!result.canceled) {
       //  save image
-      setImageSelected(result.assets[0].uri);
+      setSelectedImages((prevImages) => [...prevImages, ...result.assets.map(asset => asset.uri)]);
+
       setModalIsOpen(false);
     } else {
       alert("you did not select any image.");
@@ -142,19 +168,24 @@ export default function uploadScreen() {
         {/* Image Picker */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Pick Images</Text>
-          <TouchableOpacity style={styles.imagePicker} onPress={() => {
-            console.log("Opening modal");
-            setModalIsOpen(true)
-          }}>
-            {selectedImage === "" ? (
-              <ImageIcon size={48} color="#666" />
+          <View style={[styles.imagePicker, selectedImages.length > 0 && { height: 300 }]}>
+            {selectedImages.length > 0 ? (
+              <View style={styles.carouselContainer}>
+                <ImageCarousel images={selectedImages} />
+                <TouchableOpacity
+                  style={styles.addMoreButton}
+                  onPress={() => setModalIsOpen(true)}
+                >
+                  <Text style={styles.addMoreButtonText}>+ Add More</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
-              <Image
-                source={{ uri: selectedImage }}
-                style={{ width: "100%", height: "100%", borderRadius: 8 }} // adjust styles as needed
-              />
+              <ImageIcon size={48} color="#666" onPress={() => {
+                console.log("Opening modal");
+                setModalIsOpen(true)
+              }} />
             )}
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* Description */}
@@ -205,7 +236,11 @@ export default function uploadScreen() {
 
       {/* Add Post Button */}
       <TouchableOpacity style={styles.addButton} onPress={() => { handleAddPost() }}>
-        <Text style={styles.addButtonText}>Add Post</Text>
+      {isUploading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.addButtonText}>Add Post</Text>
+        )}
       </TouchableOpacity>
     </View>
   )
@@ -241,6 +276,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 12,
+  },
+  carouselContainer: {
+    height: 200,
+    width: '100%',
+    alignItems: "center"
+  },
+  addMoreButton: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+  },
+  addMoreButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   imagePicker: {
     width: "100%",
