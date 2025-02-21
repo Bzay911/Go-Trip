@@ -194,6 +194,7 @@ export default function RecommendationScreen() {
       <Text style={styles.title}>Perfect Hangouts For {weather} Weather</Text>
       <RecommendedPlacesList places={fetchedPlaces} location = {location}/>
     </SafeAreaView>
+
   );
 }
 
