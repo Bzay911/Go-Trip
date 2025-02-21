@@ -3,19 +3,18 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
+
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Ionicons } from '@expo/vector-icons';
+
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { FontAwesome } from '@expo/vector-icons';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
@@ -27,6 +26,7 @@ export default function TabLayout() {
           default: {},
         }),
       }}>
+
          <Tabs.Screen
         name="dynamicPlanner"
         options={{
@@ -51,13 +51,13 @@ export default function TabLayout() {
         }}
       />
      
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="community"
         options={{
           title: 'Community',
           tabBarIcon: ({ color }) => <Ionicons name='people' size={28} color={color}/>
         }}
-      />
+      /> */}
    
       <Tabs.Screen
         name="profile"
@@ -66,6 +66,20 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons name='person-circle' size={28} color={color}/>
         }}
       />
+
+        <Tabs.Screen
+        name = "communityPage"
+        options={
+          {
+            title: "Community",
+            headerShown: false,
+            tabBarIcon: ({color})=> (
+             <Ionicons name='people' size={28} color={color}/>
+            )
+          }
+        }
+        />
+
     </Tabs>
   );
 }
