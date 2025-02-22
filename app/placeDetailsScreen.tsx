@@ -76,11 +76,17 @@ export default function PlaceDetailsScreen() {
       const data = await response.json();
 
       if (data.status === "OK") {
-        const encodedPoints = data.routes[0].overview_polyline.points;
-        const decodedPoints = polyline
-          .decode(encodedPoints)
-          .map(([lat, lon]) => ({ latitude: lat, longitude: lon }));
-        setRouteCoordinates(decodedPoints);
+        let detailedCoordinates = [];
+        const legs = data.routes[0].legs;
+        legs.forEach((leg) => {
+          leg.steps.forEach((step) => {
+            const stepPoints = polyline
+              .decode(step.polyline.points)
+              .map(([lat, lon]) => ({ latitude: lat, longitude: lon }));
+            detailedCoordinates = detailedCoordinates.concat(stepPoints);
+          });
+        });
+        setRouteCoordinates(detailedCoordinates);
       } else {
         console.log("Directions API error:", data.status, data.error_message);
       }
@@ -94,12 +100,14 @@ export default function PlaceDetailsScreen() {
 
     const origin = `${locationData.latitude},${locationData.longitude}`;
     const destination = `${placeData.lat},${placeData.lon}`;
-    const waypointStr = stops.map(stop => `${stop.latitude},${stop.longitude}`).join('|');
+    const waypointStr = stops
+      .map((stop) => `${stop.latitude},${stop.longitude}`)
+      .join("|");
 
     const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving&waypoints=${waypointStr}`;
 
     Linking.openURL(url);
-};
+  };
 
   const fetchStopsAlongRoute = async (stopType) => {
     if (!routeCoordinates.length) return;
@@ -109,7 +117,7 @@ export default function PlaceDetailsScreen() {
     const results = [];
 
     for (const point of waypoints) {
-      const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${point.latitude},${point.longitude}&radius=15000&type=${stopType}&key=${PLACES_API_KEY}`;
+      const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${point.latitude},${point.longitude}&radius=1500&type=${stopType}&key=${PLACES_API_KEY}`;
 
       try {
         const response = await fetch(placesUrl);
@@ -159,19 +167,48 @@ export default function PlaceDetailsScreen() {
             onPress={() => router.back()}
           />
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              onChangeText={onChangeCurrentLocation}
-              value={currentLocation}
-            />
+<View style={styles.inputContainer}>
+  {stops.length === 0 ? (
+    // If no stops, show input fields for start and destination
+    <>
+      <TextInput
+        style={styles.input}
+        onChangeText={onChangeCurrentLocation}
+        value={currentLocation}
+        placeholder="Enter start location"
+      />
+      <TextInput
+        style={styles.input}
+        onChangeText={onChangeDestinationLocation}
+        value={destinationLocation}
+        placeholder="Enter destination"
+      />
+    </>
+  ) : (
+    // If stops exist, display the formatted route
+    <View style={styles.routeBox}>
+      {/* Start Location */}
+      <Text style={styles.locationText}>{currentLocation}</Text>
 
-            <TextInput
-              style={styles.input}
-              onChangeText={onChangeDestinationLocation}
-              value={destinationLocation}
-            />
-          </View>
+      {/* Display Stops */}
+      {stops.length === 1 ? (
+        <Text style={styles.locationText}>Stop: {stops[0].name}</Text>
+      ) : stops.length > 1 ? (
+        <>
+           <Text style={styles.locationText}>{stops.length} stops</Text>
+        </>
+      ) : (
+        <>
+        
+        
+        </>
+      )}
+      <Text style={styles.locationText}>{destinationLocation}</Text>
+    </View>
+  )}
+</View>
+
+
         </View>
 
         <Text style={styles.addStopTitleText}>Add stops along the route</Text>
@@ -235,11 +272,32 @@ export default function PlaceDetailsScreen() {
                   longitude: stop.longitude,
                 }}
                 title={stop.name}
+                pinColor="gray"
               />
             ))}
             {routeCoordinates.length > 0 && (
               <Polyline
                 coordinates={routeCoordinates}
+                strokeWidth={6}
+                strokeColor="blue"
+              />
+            )}
+            {stops.length > 0 && (
+              <Polyline
+                coordinates={[
+                  {
+                    latitude: locationData.latitude,
+                    longitude: locationData.longitude,
+                  },
+                  ...stops.map((stop) => ({
+                    latitude: stop.latitude,
+                    longitude: stop.longitude,
+                  })),
+                  {
+                    latitude: parseFloat(placeData.lat),
+                    longitude: parseFloat(placeData.lon),
+                  },
+                ]}
                 strokeWidth={6}
                 strokeColor="blue"
               />
@@ -270,7 +328,7 @@ export default function PlaceDetailsScreen() {
             ref={bottomSheetRef}
             snapPoints={["25%", "50%", "100%"]} // Define height options
             onChange={handleSheetChanges}
-            enablePanDownToClose = {true}
+            enablePanDownToClose={true}
           >
             <BottomSheetView style={styles.contentContainer}>
               <Text style={styles.modalTitle}>
@@ -375,6 +433,9 @@ const styles = StyleSheet.create({
     margin: 8,
     borderWidth: 1,
     padding: 10,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    fontSize:16
   },
   map: {
     width: "100%",
@@ -425,5 +486,26 @@ const styles = StyleSheet.create({
   },
   bottomButtonText: {
     color: "white",
+  },
+  // inputContainer: {
+  //   padding: 16,
+  // },
+  // input: {
+  //   borderWidth: 1,
+  //   borderColor: "#ccc",
+  //   borderRadius: 8,
+  //   padding: 12,
+  //   marginBottom: 10,
+  // },
+  routeBox: {
+    borderWidth:1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 18,
+    margin:8
+  },
+  locationText: {
+    fontSize: 16,
+    marginVertical: 5,
   },
 });
