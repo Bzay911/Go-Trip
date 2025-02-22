@@ -14,6 +14,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import PlacesProvider from './placesContext';
@@ -44,6 +45,18 @@ export default function RootLayout() {
 <AuthContext.Provider value={FBauth}>
 <DBContext.Provider value={FBdb}>
   <FsContext.Provider value={storage}>
+    
+  {/* useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
+  if (!loaded) {
+    return null;
+  } */}
+{/* 
+  return ( */}
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       {/* <Stack screenOptions={{headerShown: false}}> */}
       <PlacesProvider>
