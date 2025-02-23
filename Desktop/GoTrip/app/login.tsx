@@ -26,7 +26,16 @@ export default function Login() {
 
         try {
             // Attempt to sign in with email and password
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Check if email is verified
+            if (!user.emailVerified) {
+                Alert.alert("Email not verified", "Please verify your email address before logging in.");
+                return;
+            }
+
+            // If email is verified, navigate to the profile screen
             router.replace('/(tabs)/profile');
         } catch (err: any) {
             // Handle Firebase specific error codes

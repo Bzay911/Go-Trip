@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet, StatusBar, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { Link } from 'expo-router';
 import { AuthContext } from '@/context/AuthContext';
-import { useContext, useState, useEffect } from 'react';
-import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from '@firebase/auth'; // Import updateProfile
+import { useContext, useState } from 'react';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from '@firebase/auth';
 import { useRouter } from 'expo-router';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import React from 'react';
-import { Entypo, FontAwesome, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { Entypo, FontAwesome } from '@expo/vector-icons';
 
 export default function Signup() {
     const auth = useContext(AuthContext);
@@ -15,12 +15,27 @@ export default function Signup() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [name, setName] = useState(''); // Add name state
+    const [name, setName] = useState('');
+    const [passwordValid, setPasswordValid] = useState(false); 
+    const [passwordFocused, setPasswordFocused] = useState(false); // Track if password field is focused
+
+    // Regular expression for validating email format
+    const validateEmail = (email: string) => {
+        const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return re.test(email);
+    };
+
+    // Password validation criteria
+    const validatePassword = (password: string) => {
+        // Password must have at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        return passwordRegex.test(password);
+    };
 
     const createAccount = async () => {
         setError(null);
 
-        // Validation checks for empty fields and mismatched passwords
+        // Validation checks for empty fields, mismatched passwords, and invalid email
         if (!name || !email || !password || !confirmPassword) {
             Alert.alert('Error', 'Please fill in all the fields');
             return;
@@ -31,37 +46,62 @@ export default function Signup() {
             return;
         }
 
+        if (!validateEmail(email)) {
+            Alert.alert('Error', 'Please enter a valid email address');
+            return;
+        }
+
         try {
+            // Create the user with email and password
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             // Update user profile with name
-            await updateProfile(user, { displayName: name }); // Update display name
+            await updateProfile(user, { displayName: name });
 
-            router.replace('/(tabs)/profile'); // Redirect to profile after signup
+            // Send email verification
+            await sendEmailVerification(user);
+
+            Alert.alert('Check your inbox', 'A verification email has been sent. Please verify your email before logging in.');
+
+            // Redirect to login screen after signing up and sending the email verification
+            router.replace('/login');  // Navigate to the login screen after signup
         } catch (err: any) {
-            setError(err.code);
-            console.error("Firebase Error:", err);
+            // Handle Firebase specific error codes
+            if (err.code === 'auth/email-already-in-use') {
+                Alert.alert('Error', 'This email is already in use. Please use a different email address.');
+            } else if (err.code === 'auth/invalid-email') {
+                Alert.alert('Error', 'The email address is not valid.');
+            } else {
+                setError(err.code);
+                console.error("Firebase Error:", err);
+            }
         }
     };
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                router.replace('/(tabs)/profile'); 
-            }
-        });
-        return () => unsubscribe(); 
-    }, [auth, router]);
+    // Update password validity when password changes
+    const handlePasswordChange = (newPassword: string) => {
+        setPassword(newPassword);
+        setPasswordValid(validatePassword(newPassword));
+    };
+
+    // Criteria check state
+    const passwordCriteria = [
+        { regex: /[a-z]/, label: "At least one lowercase letter", met: password.match(/[a-z]/) },
+        { regex: /[A-Z]/, label: "At least one uppercase letter", met: password.match(/[A-Z]/) },
+        { regex: /\d/, label: "At least one number", met: password.match(/\d/) },
+        { regex: /[@$!%*?&]/, label: "At least one special character", met: password.match(/[@$!%*?&]/) },
+        { regex: /.{8,}/, label: "At least 8 characters", met: password.length >= 8 },
+    ];
 
     return (
         <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Adjust for keyboard
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
             <StatusBar backgroundColor="white" barStyle="dark-content" />
 
-            <View style={styles.content}> {/* Content wrapper for centering */}
+            <View style={styles.content}>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>New to Go Trip?</Text>
                     <Text style={styles.subtitle}>Sign up and enjoy locally</Text>
@@ -69,7 +109,7 @@ export default function Signup() {
 
                 <View style={styles.inputContainer}>
                     <View style={styles.inputWrapper}>
-                    <FontAwesome name="user" size={20} color="#A0A3A8" />
+                        <FontAwesome name="user" size={20} color="#A0A3A8" />
                         <TextInput
                             style={styles.input}
                             placeholder="Name"
@@ -99,10 +139,25 @@ export default function Signup() {
                             placeholder="Password"
                             placeholderTextColor="#A0A3A8"
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={handlePasswordChange}
                             secureTextEntry
+                            onFocus={() => setPasswordFocused(true)} // Set password field to focused
+                            onBlur={() => setPasswordFocused(false)}  // Unset password field focus
                         />
                     </View>
+
+                    {/* Password Criteria Display */}
+                    {passwordFocused && (
+                        <View style={styles.passwordCriteriaContainer}>
+                            {passwordCriteria.map((criterion, index) => (
+                                <View key={index} style={styles.passwordCriteriaRow}>
+                                    <Text style={[styles.passwordCriteriaText, { color: criterion.met ? 'green' : 'red' }]}>
+                                        {criterion.met ? '✔' : '✘'} {criterion.label}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
 
                     <View style={styles.inputWrapper}>
                         <FontAwesome name="lock" size={20} color="#A0A3A8" />
@@ -116,8 +171,12 @@ export default function Signup() {
                         />
                     </View>
 
-                    <TouchableOpacity style={styles.button} onPress={createAccount}>
-                        <Text style={styles.buttonText}>Sign up</Text>
+                    <TouchableOpacity
+                        style={[styles.button, { opacity: passwordValid ? 1 : 0.5 }]} // Disable button if password is invalid
+                        onPress={createAccount}
+                        disabled={!passwordValid}
+                    >
+                        <Text style={styles.buttonText}>Sign Up</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -129,7 +188,7 @@ export default function Signup() {
 
                 <TouchableOpacity style={styles.googleButton}>
                     <FontAwesome name="google" size={20} color="white" />
-                    <Text style={styles.googleButtonText}>Google</Text>
+                    <Text style={styles.googleButtonText}>Sign Up with Google</Text>
                 </TouchableOpacity>
 
                 <View style={styles.loginContainer}>
@@ -149,10 +208,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F8F9FA',
-        justifyContent: 'center', // Center vertically
+        justifyContent: 'center',
         padding: 20,
     },
-    content: { // Style for content wrapper
+    content: {
         width: '100%',
     },
     titleContainer: {
@@ -183,11 +242,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         backgroundColor: '#FFFFFF',
     },
-    inputIcon: {
-        marginRight: 20,
-        color: '#A0A3A8',
-        fontSize: 20,
-    },
     input: {
         flex: 1,
         height: 40,
@@ -204,6 +258,17 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    passwordCriteriaContainer: {
+        marginTop: 10,
+    },
+    passwordCriteriaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    passwordCriteriaText: {
+        fontSize: 12,
+        marginLeft: 10,
     },
     orContainer: {
         flexDirection: 'row',
@@ -245,4 +310,3 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
 });
-
